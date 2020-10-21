@@ -188,3 +188,56 @@ for each_url in course_links_file:
         course_data['Prerequisite_1'] = 'year 12'
 
     # DURATION & DURATION_TIME
+    duration_tag = soup.find('div', class_='card-details-label', text=re.compile('full time', re.IGNORECASE))
+    if duration_tag:
+        duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li')\
+            .get_text().__str__().strip()
+        duration_number = re.search(r'\d+', duration_text).group()
+        print(duration_number)
+        course_data['Description'] = duration_number
+        course_data['Full_Time'] = 'yes'
+        if int(duration_number) > 1:
+            course_data['Duration_Time'] = 'years'
+        elif int(duration_number) == 1:
+            course_data['Duration_Time'] = 'year'
+    elif soup.find('div', class_='card-details-label', text=re.compile('full-time', re.IGNORECASE)):
+        duration_tag = soup.find('div', class_='card-details-label', text=re.compile('full-time', re.IGNORECASE))
+        duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
+            .get_text().__str__().strip()
+        duration_number = re.search(r'\d+', duration_text).group()
+        print(duration_number)
+        course_data['Description'] = duration_number
+        course_data['Full_Time'] = 'yes'
+        if int(duration_number) > 1:
+            course_data['Duration_Time'] = 'years'
+        elif int(duration_number) == 1:
+            course_data['Duration_Time'] = 'year'
+    elif soup.find('div', class_='card-details-label', text=re.compile('part time', re.IGNORECASE)):
+        duration_tag = soup.find('div', class_='card-details-label', text=re.compile('part time', re.IGNORECASE))
+        duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
+            .get_text().__str__().strip()
+        duration_number = re.search(r'\d+', duration_text).group()
+        print(duration_number)
+        course_data['Description'] = duration_number
+        course_data['Part_Time'] = 'yes'
+        if int(duration_number) > 1:
+            course_data['Duration_Time'] = 'years'
+        elif int(duration_number) == 1:
+            course_data['Duration_Time'] = 'year'
+    elif soup.find('div', class_='card-details-label', text=re.compile('part-time', re.IGNORECASE)):
+        duration_tag = soup.find('div', class_='card-details-label', text=re.compile('part-time', re.IGNORECASE))
+        duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
+            .get_text().__str__().strip()
+        duration_number = re.search(r'\d+', duration_text).group()
+        print(duration_number)
+        course_data['Description'] = duration_number
+        course_data['Part_Time'] = 'yes'
+        if int(duration_number) > 1:
+            course_data['Duration_Time'] = 'years'
+        elif int(duration_number) == 1:
+            course_data['Duration_Time'] = 'year'
+
+    # # FULL_TIME/PART_TIME
+    # availability_tag = soup.find('div', class_='card-details-label', text=re.compile('ATTENDANCE', re.IGNORECASE))
+    # if availability_tag:
+
