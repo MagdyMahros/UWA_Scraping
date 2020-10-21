@@ -96,6 +96,9 @@ course_data = {'Level_Code': '', 'University': 'University Of Western Australia'
                'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '',
                'Prerequisite_1_grade': '', 'Website': '', 'Course_Lang': 'English', 'Availability': '', 'Study_Mode': '',
                'Description': '', 'Mode_of_Study': '', 'Study_Type': '', 'Online': '', 'Offline': ''}
+
+possible_cities = {'albany': 'Albany', 'perth': 'Perth'}
+
 course_data_all = []
 level_key = TemplateData.level_key  # dictionary of course levels
 faculty_key = TemplateData.faculty_key  # dictionary of course levels
@@ -189,6 +192,7 @@ for each_url in course_links_file:
 
     # DURATION & DURATION_TIME
     duration_tag = soup.find('div', class_='card-details-label', text=re.compile('full time', re.IGNORECASE))
+    availability_list = []
     if duration_tag:
         duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li')\
             .get_text().__str__().strip()
@@ -200,6 +204,7 @@ for each_url in course_links_file:
             course_data['Duration_Time'] = 'years'
         elif int(duration_number) == 1:
             course_data['Duration_Time'] = 'year'
+        availability_list.append('full time')
     elif soup.find('div', class_='card-details-label', text=re.compile('full-time', re.IGNORECASE)):
         duration_tag = soup.find('div', class_='card-details-label', text=re.compile('full-time', re.IGNORECASE))
         duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
@@ -212,6 +217,7 @@ for each_url in course_links_file:
             course_data['Duration_Time'] = 'years'
         elif int(duration_number) == 1:
             course_data['Duration_Time'] = 'year'
+        availability_list.append('full time')
     elif soup.find('div', class_='card-details-label', text=re.compile('part time', re.IGNORECASE)):
         duration_tag = soup.find('div', class_='card-details-label', text=re.compile('part time', re.IGNORECASE))
         duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
@@ -224,6 +230,7 @@ for each_url in course_links_file:
             course_data['Duration_Time'] = 'years'
         elif int(duration_number) == 1:
             course_data['Duration_Time'] = 'year'
+        availability_list.append('part time')
     elif soup.find('div', class_='card-details-label', text=re.compile('part-time', re.IGNORECASE)):
         duration_tag = soup.find('div', class_='card-details-label', text=re.compile('part-time', re.IGNORECASE))
         duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
@@ -236,8 +243,23 @@ for each_url in course_links_file:
             course_data['Duration_Time'] = 'years'
         elif int(duration_number) == 1:
             course_data['Duration_Time'] = 'year'
+        availability_list.append('part time')
+    if 'part time' not in availability_list:
+        course_data['Part_Time'] = 'no'
 
-    # # FULL_TIME/PART_TIME
-    # availability_tag = soup.find('div', class_='card-details-label', text=re.compile('ATTENDANCE', re.IGNORECASE))
-    # if availability_tag:
+
+    # FULL_TIME/PART_TIME
+    availability_tag = soup.find('div', class_='card-details-label', text=re.compile('ATTENDANCE', re.IGNORECASE))
+    if availability_tag:
+        availability_text = availability_tag.find_next('div', class_='card-details-value')\
+            .find('ul').get_text().__str__().strip()
+        print('availability ', availability_text.lower())
+        availability_list.append(availability_text.lower())
+        for element in availability_list:
+            if 'full-time' in element.lower():
+                course_data['Full_Time'] = 'yes'
+            if 'part-time' in element.lower():
+                course_data['Part_Time'] = 'yes'
+
+    #
 
