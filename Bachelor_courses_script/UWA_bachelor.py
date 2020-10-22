@@ -6,27 +6,17 @@
     * description:This program extracts the corresponding Bachelor courses details and tabulate it.
 """
 import csv
-import json
 import re
 import time
 from pathlib import Path
 from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
-from urllib.parse import urljoin
 import bs4 as bs4
 import requests
 import os
 import copy
-
-# TODO: Add the duration and the template to the working directory when needed
 from CustomMethods import DurationConverter
 from CustomMethods import TemplateData
 
-courses_page_url = 'https://www.uwa.edu.au/study/courses-and-careers/find-a-course?level=Undergraduate&term='
-page_url = 'https://www.uwa.edu.au'
 
 option = webdriver.ChromeOptions()
 option.add_argument(" - incognito")
@@ -35,52 +25,6 @@ exec_path = Path(os.getcwd().replace('\\', '/'))
 exec_path = exec_path.parent.__str__() + '/Libraries/Google/v86/chromedriver.exe'
 browser = webdriver.Chrome(executable_path=exec_path, options=option)
 
-
-# TODO: extract the course links here
-def extract_course_links(courses_url, name_of_extracted_file, browser_, page_url_):
-    # MAIN ROUTINE
-    html = browser.page_source
-    course_type_links = []
-    course_links = []
-    browser_.get(courses_url)
-    delay_ = 10  # seconds
-    # expander = browser.find_element_by_xpath("//button[@type='button' and @class='results-action-load-more']")
-    # while True:
-    try:
-        browser_.execute_script("arguments[0].click();", WebDriverWait(browser, delay_).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[@type='button' and @class='results-action-load-more']"))))
-    except TimeoutException:
-        print('timeout exception')
-    else:
-        html = browser_.page_source
-        print('got page source')
-    finally:
-        browser_.quit()
-    if html:
-        soup = bs4.BeautifulSoup(html, 'html.parser')
-        if soup:
-            result_items = soup.find_all('a', class_='result-item result-item--course', href=True)
-            if result_items:
-                for i in result_items:
-                    # print(i['href'])
-                    link = i['href']
-                    bachelor_link = urljoin(page_url_, link)
-                    course_links.append(bachelor_link)
-    # print(course_links)
-    # SAVE TO FILE
-    course_links_file_path = os.getcwd().replace('\\', '/') + '/' + name_of_extracted_file + '.txt'
-    course_links_file = open(course_links_file_path, 'w')
-    for i in course_links:
-        if i is not None and i != "" and i != "\n":
-            if i == course_links[-1]:
-                course_links_file.write(i.strip())
-            else:
-                course_links_file.write(i.strip() + '\n')
-    course_links_file.close()
-
-
-# RUN THIS ONLY IF YOU WANT TO EXTRACT THE COURSES LINK
-# extract_course_links(courses_page_url, 'UWA_Bachelor_links', browser,page_url)
 
 # read the url from each file into a list
 course_links_file_path = Path(os.getcwd().replace('\\', '/'))
@@ -253,7 +197,7 @@ for each_url in course_links_file:
     if availability_tag:
         availability_text = availability_tag.find_next('div', class_='card-details-value')\
             .find('ul').get_text().__str__().strip()
-        print('availability ', availability_text.lower())
+        # print('availability ', availability_text.lower())
         availability_list.append(availability_text.lower())
         for element in availability_list:
             if 'full-time' in element.lower():
@@ -261,5 +205,12 @@ for each_url in course_links_file:
             if 'part-time' in element.lower():
                 course_data['Part_Time'] = 'yes'
 
-    #
+    # CITY
+    locations_card = soup.find('div', class_='card-details-label', text=re.compile('Locations', re.IGNORECASE))
+    if locations_card:
+        locations = locations_card.find_next('div', class_='card-details-value')\
+            .find('ul', class_='chevron-before-list').find_all('li')
+        for city in locations:
+            print(city.get_text().__str__().strip())
+
 
