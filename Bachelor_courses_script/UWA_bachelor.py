@@ -41,9 +41,9 @@ csv_file_path = Path(os.getcwd().replace('\\', '/'))
 csv_file = csv_file_path.__str__() + '/UWA_bachelors.csv'
 
 course_data = {'Level_Code': '', 'University': 'Australian Catholic University', 'City': '', 'Country': 'Australia',
-                'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': '', 'Duration': '',
+                'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': 'year', 'Duration': '',
                 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '', 'Prerequisite_2': '',
-                'Prerequisite_3': '', 'Prequisite_1_grade':'', 'Prequisite_2_grade':'', 'Prequisite_3_grade':'',
+                'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prequisite_2_grade':'', 'Prequisite_3_grade': '',
                 'Website': '', 'Course_Lang': '', 'Availability': '','Description': '', 'Career_Outcomes': '',
                'Online': '', 'Offline': 'yes', 'Distance': '', 'Face_to_Face': 'yes', 'Blended': '', 'Remarks': ''}
 
@@ -152,7 +152,7 @@ for each_url in course_links_file:
             .get_text().__str__().strip()
         duration_number = re.search(r'\d+', duration_text).group()
         print(duration_number)
-        course_data['Description'] = duration_number
+        course_data['Duration'] = duration_number
         course_data['Full_Time'] = 'yes'
         if int(duration_number) > 1:
             course_data['Duration_Time'] = 'years'
@@ -165,7 +165,7 @@ for each_url in course_links_file:
             .get_text().__str__().strip()
         duration_number = re.search(r'\d+', duration_text).group()
         print(duration_number)
-        course_data['Description'] = duration_number
+        course_data['Duration'] = duration_number
         course_data['Full_Time'] = 'yes'
         if int(duration_number) > 1:
             course_data['Duration_Time'] = 'years'
@@ -178,7 +178,7 @@ for each_url in course_links_file:
             .get_text().__str__().strip()
         duration_number = re.search(r'\d+', duration_text).group()
         print(duration_number)
-        course_data['Description'] = duration_number
+        course_data['Duration'] = duration_number
         course_data['Part_Time'] = 'yes'
         if int(duration_number) > 1:
             course_data['Duration_Time'] = 'years'
@@ -191,7 +191,7 @@ for each_url in course_links_file:
             .get_text().__str__().strip()
         duration_number = re.search(r'\d+', duration_text).group()
         print(duration_number)
-        course_data['Description'] = duration_number
+        course_data['Duration'] = duration_number
         course_data['Part_Time'] = 'yes'
         if int(duration_number) > 1:
             course_data['Duration_Time'] = 'years'
@@ -243,8 +243,9 @@ for each_url in course_links_file:
     # get the data
     out_come_card = soup.find('h3', class_='card-title', text=re.compile('Related careers', re.IGNORECASE))
     out_come_card2 = soup.find('h3', class_='card-title', text=re.compile('Career opportunities', re.IGNORECASE))
+    outcome_list = []
+    outcome_paragraph = []
     if out_come_card:
-        outcome_list = []
         data_container = out_come_card.find_next('div', class_='card-container').\
             find('div', class_='card-content rich-text-content').find('ul')
         if data_container:
@@ -262,10 +263,11 @@ for each_url in course_links_file:
                 career_list = data_container.find('div').find_all('a', class_='card-rich-link')
                 if career_list:
                     for career in career_list:
-                        print(career.get_text().__str__().strip().replace('\n', ' / '))
-                        course_data['Career_Outcomes'] = career.get_text().__str__().strip().replace('\n', ' / ')
-
-
+                        # print(career.get_text().__str__().strip().replace('\n', ' / '))
+                        outcome_list.append(career.get_text().__str__().strip().replace('\n', ' / '))
+                outcome_list = ' / '.join(outcome_list)
+                print(outcome_list.__str__().strip())
+                course_data['Career_Outcomes'] =outcome_list.__str__().strip()
 
     # duplicating entries with multiple cities for each city
     for i in actual_cities:
@@ -273,6 +275,27 @@ for each_url in course_links_file:
         course_data_all.append(copy.deepcopy(course_data))
     del actual_cities
 
+# TABULATE THE DATA
+desired_order_list = ['Level_Code', 'University', 'City', 'Country', 'Course', 'Faculty', 'Int_Fees', 'Local_Fees',
+                      'Currency', 'Currency_Time', 'Duration','Duration_Time', 'Full_Time', 'Part_Time',
+                      'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',  'Prequisite_2_grade',
+                      'Prequisite_3_grade', 'Website', 'Course_Lang', 'Availability', 'Description', 'Int_Description',
+                      'Career_Outcomes', 'Online', 'Offline', 'Distance', 'Face_to_Face', 'Blended', 'Remarks']
+
+course_dict_keys = set().union(*(d.keys() for d in course_data_all))
+
+with open(csv_file, 'w', encoding='utf-8', newline='') as output_file:
+    dict_writer = csv.DictWriter(output_file, course_dict_keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(course_data_all)
+
+with open(csv_file, 'r', encoding='utf-8') as infile, open('UWA_bachelors_ordered.csv', 'w', encoding='utf-8', newline='') as outfile:
+    writer = csv.DictWriter(outfile, fieldnames=desired_order_list)
+    # reorder the header first
+    writer.writeheader()
+    for row in csv.DictReader(infile):
+        # writes the reordered rows to the new file
+        writer.writerow(row)
 
 
 
