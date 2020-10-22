@@ -11,6 +11,11 @@ import time
 from pathlib import Path
 from selenium import webdriver
 import bs4 as bs4
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 import requests
 import os
 import copy
@@ -35,11 +40,12 @@ course_links_file = open(course_links_file_path, 'r')
 csv_file_path = Path(os.getcwd().replace('\\', '/'))
 csv_file = csv_file_path.__str__() + '/UWA_bachelors.csv'
 
-course_data = {'Level_Code': '', 'University': 'University Of Western Australia', 'City': '', 'Country': 'Australia',
-               'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': '',
-               'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '',
-               'Prerequisite_1_grade': '', 'Website': '', 'Course_Lang': 'English', 'Availability': '', 'Study_Mode': '',
-               'Description': '', 'Mode_of_Study': '', 'Study_Type': '', 'Online': '', 'Offline': ''}
+course_data = {'Level_Code': '', 'University': 'Australian Catholic University', 'City': '', 'Country': 'Australia',
+                'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': '', 'Duration': '',
+                'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '', 'Prerequisite_2': '',
+                'Prerequisite_3': '', 'Prequisite_1_grade':'', 'Prequisite_2_grade':'', 'Prequisite_3_grade':'',
+                'Website': '', 'Course_Lang': '', 'Availability': '','Description': '', 'Career_Outcomes': '',
+               'Online': '', 'Offline': 'yes', 'Distance': '', 'Face_to_Face': 'yes', 'Blended': '', 'Remarks': ''}
 
 possible_cities = {'albany': 'Albany', 'perth': 'Perth'}
 possible_languages = {'Japanese': 'Japanese', 'French': 'French', 'Italian': 'Italian', 'Korean': 'Korean',
@@ -119,13 +125,15 @@ for each_url in course_links_file:
     if atar_tag_1:
         atar_tag_2 = atar_tag_1.find_next('div', class_='card-details-value')
         if atar_tag_2:
-            atar = atar_tag_2.find('ul', class_='chevron-before-list').find('li')
-            atar_val = re.search(r'\d+', atar.get_text().__str__().strip()).group()
-            if int(atar_val) in range(40, 99):
-                atar_tag_3 = atar_val
-                # print(atar_val)
-                course_data['Prerequisite_1_grade'] = atar_val
-                course_data['Prerequisite_1'] = 'year 12'
+            atar_tag_3 = atar_tag_2.find('ul', class_='chevron-before-list')
+            if atar_tag_3:
+                atar = atar_tag_3.find('li')
+                atar_val = re.search(r'\d+', atar.get_text().__str__().strip()).group()
+                if int(atar_val) in range(40, 99):
+                    atar_tag_3 = atar_val
+                    # print(atar_val)
+                    course_data['Prerequisite_1_grade'] = atar_val
+                    course_data['Prerequisite_1'] = 'year 12'
     # FOR MAJOR
     atar_tag_1_ = soup.find('div', class_='course-header-module-stat-subject',
                             text=re.compile('ATAR', re.IGNORECASE))
@@ -215,6 +223,49 @@ for each_url in course_links_file:
         for city in locations:
             city = city.get_text().__str__().strip().split()[0].lower()
             actual_cities.append(city)
+
+    # COURSE LANGUAGE
+    for language in possible_languages:
+        if language in course_data['Course']:
+            course_data['Course_Lang'] = language
+        else:
+            course_data['Course_Lang'] = 'English'
+    print('COURSE LANGUAGE: ', course_data['Course_Lang'])
+
+    # CAREER OUTCOME
+    # navigate to careers & further study tab
+    try:
+        browser.execute_script("arguments[0].click();", WebDriverWait(browser, 5).until(
+            EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, 'CAREERS & FURTHER STUDY'))))
+    except TimeoutException:
+        print('Timeout Exception')
+        pass
+    # get the data
+    out_come_card = soup.find('h3', class_='card-title', text=re.compile('Related careers', re.IGNORECASE))
+    out_come_card2 = soup.find('h3', class_='card-title', text=re.compile('Career opportunities', re.IGNORECASE))
+    if out_come_card:
+        outcome_list = []
+        data_container = out_come_card.find_next('div', class_='card-container').\
+            find('div', class_='card-content rich-text-content').find('ul')
+        if data_container:
+            print(data_container.get_text().__str__().strip().replace('\n', ' / '))
+            course_data['Career_Outcomes'] = data_container.get_text().__str__().strip().replace('\n', ' / ')
+    elif out_come_card2:
+        data_container = out_come_card2.find_next('div', class_='card-container')
+        if data_container:
+            career_tag = data_container.find('div', class_='card-content rich-text-content')
+            if career_tag:
+                career_tag.find('ul', class_='chevron-before-list')
+                print(career_tag.get_text().__str__().strip().replace('\n', ' / '))
+                course_data['Career_Outcomes'] = career_tag.get_text().__str__().strip().replace('\n', ' / ')
+            elif data_container.find('div').find_all('a', class_='card-rich-link'):
+                career_list = data_container.find('div').find_all('a', class_='card-rich-link')
+                if career_list:
+                    for career in career_list:
+                        print(career.get_text().__str__().strip().replace('\n', ' / '))
+                        course_data['Career_Outcomes'] = career.get_text().__str__().strip().replace('\n', ' / ')
+
+
 
     # duplicating entries with multiple cities for each city
     for i in actual_cities:
