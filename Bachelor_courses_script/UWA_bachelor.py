@@ -42,6 +42,8 @@ course_data = {'Level_Code': '', 'University': 'University Of Western Australia'
                'Description': '', 'Mode_of_Study': '', 'Study_Type': '', 'Online': '', 'Offline': ''}
 
 possible_cities = {'albany': 'Albany', 'perth': 'Perth'}
+possible_languages = {'Japanese': 'Japanese', 'French': 'French', 'Italian': 'Italian', 'Korean': 'Korean',
+                      'Indonesian': 'Indonesian', 'Chinese': 'Chinese', 'Spanish': 'Spanish'}
 
 course_data_all = []
 level_key = TemplateData.level_key  # dictionary of course levels
@@ -49,7 +51,7 @@ faculty_key = TemplateData.faculty_key  # dictionary of course levels
 
 # GET EACH COURSE LINK
 for each_url in course_links_file:
-    # actual_cities = []
+    actual_cities = []
     browser.get(each_url)
     pure_url = each_url.strip()
     each_url = browser.page_source
@@ -211,6 +213,17 @@ for each_url in course_links_file:
         locations = locations_card.find_next('div', class_='card-details-value')\
             .find('ul', class_='chevron-before-list').find_all('li')
         for city in locations:
-            print(city.get_text().__str__().strip())
+            city = city.get_text().__str__().strip().split()[0].lower()
+            actual_cities.append(city)
+
+    # duplicating entries with multiple cities for each city
+    for i in actual_cities:
+        course_data['City'] = possible_cities[i]
+        course_data_all.append(copy.deepcopy(course_data))
+    del actual_cities
+
+
+
+
 
 
