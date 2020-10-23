@@ -3,7 +3,7 @@
     * company: Fresh Futures/Seeka Technology
     * position: IT Intern
     * date: 20-10-20
-    * description:This program extracts the corresponding Bachelor courses details and tabulate it.
+    * description:This script extracts the corresponding Bachelor courses details and tabulate it.
 """
 import csv
 import re
@@ -14,14 +14,10 @@ import bs4 as bs4
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
-import requests
 import os
 import copy
-from CustomMethods import DurationConverter
 from CustomMethods import TemplateData
-
 
 option = webdriver.ChromeOptions()
 option.add_argument(" - incognito")
@@ -29,7 +25,6 @@ option.add_argument("headless")
 exec_path = Path(os.getcwd().replace('\\', '/'))
 exec_path = exec_path.parent.__str__() + '/Libraries/Google/v86/chromedriver.exe'
 browser = webdriver.Chrome(executable_path=exec_path, options=option)
-
 
 # read the url from each file into a list
 course_links_file_path = Path(os.getcwd().replace('\\', '/'))
@@ -41,11 +36,12 @@ csv_file_path = Path(os.getcwd().replace('\\', '/'))
 csv_file = csv_file_path.__str__() + '/UWA_bachelors.csv'
 
 course_data = {'Level_Code': '', 'University': 'Australian Catholic University', 'City': '', 'Country': 'Australia',
-                'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': 'year', 'Duration': '',
-                'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '', 'Prerequisite_2': '',
-                'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prequisite_2_grade':'', 'Prequisite_3_grade': '',
-                'Website': '', 'Course_Lang': '', 'Availability': '','Description': '', 'Career_Outcomes': '',
-               'Online': '', 'Offline': 'yes', 'Distance': '', 'Face_to_Face': 'yes', 'Blended': '', 'Remarks': ''}
+               'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': 'year',
+               'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '',
+               'Prerequisite_2': '', 'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prerequisite_2_grade': '',
+               'Prerequisite_3_grade': '', 'Website': '', 'Course_Lang': '', 'Availability': '', 'Description': '',
+               'Career_Outcomes': '', 'Online': '', 'Offline': 'yes', 'Distance': '', 'Face_to_Face': 'yes',
+               'Blended': '', 'Remarks': ''}
 
 possible_cities = {'albany': 'Albany', 'perth': 'Perth'}
 possible_languages = {'Japanese': 'Japanese', 'French': 'French', 'Italian': 'Italian', 'Korean': 'Korean',
@@ -97,20 +93,20 @@ for each_url in course_links_file:
     # COURSE DESCRIPTION
     # FOR DEGREE
     if soup.find('div', class_='degree-details cards'):
-        d_description = soup.find('div', class_='degree-details cards')\
+        d_description = soup.find('div', class_='degree-details cards') \
             .find('div', class_='module-titles').find('p', class_='module-sub-title').text.strip().replace('\n', '')
         if '.' in d_description:  # Just to make sure the tag has text in it because there r some tags has no text
             course_data['Description'] = d_description
             print(d_description)
     # FOR MAJORS
     if soup.find('div', class_='course-details cards'):
-        m_description = soup.find('div', class_='course-details cards')\
+        m_description = soup.find('div', class_='course-details cards') \
             .find('div', class_='module-titles').find('div', class_='module-sub-title').text.strip().replace('\n', '')
         course_data['Description'] = m_description
         print(m_description)
     # FOR SOME WEIRD DEGREE PAGES THAT HAS DIFFERENT STRUCTURE
     if soup.find('div', class_='degree-details cards'):
-        d_description = soup.find('div', class_='degree-details cards')\
+        d_description = soup.find('div', class_='degree-details cards') \
             .find('div', class_='module-titles')
         if d_description:
             d_description_p = d_description.find_all('p')
@@ -138,7 +134,7 @@ for each_url in course_links_file:
     atar_tag_1_ = soup.find('div', class_='course-header-module-stat-subject',
                             text=re.compile('ATAR', re.IGNORECASE))
     if atar_tag_1_:
-        atar_tag_2_ = atar_tag_1_.find_previous('div', class_='course-header-module-stat-number')\
+        atar_tag_2_ = atar_tag_1_.find_previous('div', class_='course-header-module-stat-number') \
             .get_text().__str__().strip()
         # print(atar_tag_2_)
         course_data['Prerequisite_1_grade'] = atar_tag_2_
@@ -148,7 +144,7 @@ for each_url in course_links_file:
     duration_tag = soup.find('div', class_='card-details-label', text=re.compile('full time', re.IGNORECASE))
     availability_list = []
     if duration_tag:
-        duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li')\
+        duration_text = duration_tag.find_next('div', class_='card-details-value').find('ul').find('li') \
             .get_text().__str__().strip()
         duration_number = re.search(r'\d+', duration_text).group()
         print(duration_number)
@@ -201,11 +197,10 @@ for each_url in course_links_file:
     if 'part time' not in availability_list:
         course_data['Part_Time'] = 'no'
 
-
     # FULL_TIME/PART_TIME
     availability_tag = soup.find('div', class_='card-details-label', text=re.compile('ATTENDANCE', re.IGNORECASE))
     if availability_tag:
-        availability_text = availability_tag.find_next('div', class_='card-details-value')\
+        availability_text = availability_tag.find_next('div', class_='card-details-value') \
             .find('ul').get_text().__str__().strip()
         # print('availability ', availability_text.lower())
         availability_list.append(availability_text.lower())
@@ -218,7 +213,7 @@ for each_url in course_links_file:
     # CITY
     locations_card = soup.find('div', class_='card-details-label', text=re.compile('Locations', re.IGNORECASE))
     if locations_card:
-        locations = locations_card.find_next('div', class_='card-details-value')\
+        locations = locations_card.find_next('div', class_='card-details-value') \
             .find('ul', class_='chevron-before-list').find_all('li')
         for city in locations:
             city = city.get_text().__str__().strip().split()[0].lower()
@@ -246,7 +241,7 @@ for each_url in course_links_file:
     outcome_list = []
     outcome_paragraph = []
     if out_come_card:
-        data_container = out_come_card.find_next('div', class_='card-container').\
+        data_container = out_come_card.find_next('div', class_='card-container'). \
             find('div', class_='card-content rich-text-content').find('ul')
         if data_container:
             print(data_container.get_text().__str__().strip().replace('\n', ' / '))
@@ -267,7 +262,7 @@ for each_url in course_links_file:
                         outcome_list.append(career.get_text().__str__().strip().replace('\n', ' / '))
                 outcome_list = ' / '.join(outcome_list)
                 print(outcome_list.__str__().strip())
-                course_data['Career_Outcomes'] =outcome_list.__str__().strip()
+                course_data['Career_Outcomes'] = outcome_list.__str__().strip()
 
     # duplicating entries with multiple cities for each city
     for i in actual_cities:
@@ -277,8 +272,9 @@ for each_url in course_links_file:
 
 # TABULATE THE DATA
 desired_order_list = ['Level_Code', 'University', 'City', 'Country', 'Course', 'Faculty', 'Int_Fees', 'Local_Fees',
-                      'Currency', 'Currency_Time', 'Duration','Duration_Time', 'Full_Time', 'Part_Time',
-                      'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',  'Prequisite_2_grade',
+                      'Currency', 'Currency_Time', 'Duration', 'Duration_Time', 'Full_Time', 'Part_Time',
+                      'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',
+                      'Prequisite_2_grade',
                       'Prequisite_3_grade', 'Website', 'Course_Lang', 'Availability', 'Description', 'Int_Description',
                       'Career_Outcomes', 'Online', 'Offline', 'Distance', 'Face_to_Face', 'Blended', 'Remarks']
 
@@ -289,15 +285,11 @@ with open(csv_file, 'w', encoding='utf-8', newline='') as output_file:
     dict_writer.writeheader()
     dict_writer.writerows(course_data_all)
 
-with open(csv_file, 'r', encoding='utf-8') as infile, open('UWA_bachelors_ordered.csv', 'w', encoding='utf-8', newline='') as outfile:
+with open(csv_file, 'r', encoding='utf-8') as infile, open('UWA_bachelors_ordered.csv', 'w', encoding='utf-8',
+                                                           newline='') as outfile:
     writer = csv.DictWriter(outfile, fieldnames=desired_order_list)
     # reorder the header first
     writer.writeheader()
     for row in csv.DictReader(infile):
         # writes the reordered rows to the new file
         writer.writerow(row)
-
-
-
-
-
