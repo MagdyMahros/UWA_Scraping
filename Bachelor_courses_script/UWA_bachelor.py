@@ -239,7 +239,6 @@ for each_url in course_links_file:
     out_come_card = soup.find('h3', class_='card-title', text=re.compile('Related careers', re.IGNORECASE))
     out_come_card2 = soup.find('h3', class_='card-title', text=re.compile('Career opportunities', re.IGNORECASE))
     outcome_list = []
-    outcome_paragraph = []
     if out_come_card:
         data_container = out_come_card.find_next('div', class_='card-container'). \
             find('div', class_='card-content rich-text-content').find('ul')

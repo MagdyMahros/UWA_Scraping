@@ -18,6 +18,7 @@ from selenium.common.exceptions import TimeoutException
 import os
 import copy
 from CustomMethods import TemplateData
+from CustomMethods import DurationConverter as dura
 
 option = webdriver.ChromeOptions()
 option.add_argument(" - incognito")
@@ -91,6 +92,61 @@ for each_url in course_links_file:
         description = d_title.find_next('div', class_='module-sub-title')
         print('COURSE DESCRIPTION: ', description.get_text())
         course_data['Description'] = description.get_text()
+
+    # TODO: FIND PREREQUISITES
+
+    # DURATION & DURATION_TIME
+    details_card_title = soup.find('h3', class_='card-title', text=re.compile('Quick details', re.IGNORECASE))
+    if details_card_title:
+        button = details_card_title.find_next('a', class_='cta-row-link modal-hook')
+        if button:
+            try:
+                browser.execute_script("arguments[0].click();", WebDriverWait(browser, 5).until(
+                    EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, 'View full details'))))
+            except TimeoutException:
+                print('Timeout Exception')
+                pass
+            # grab the information
+            dynamic_info_card = details_card_title.find_next('div', class_='card-details card-details-dynamic')
+            if dynamic_info_card:
+                duration_tag = dynamic_info_card.find_next('div', class_='card-details-label',
+                                                           text=re.compile('duration', re.IGNORECASE))
+                if duration_tag:
+                    duration = duration_tag.find_next('div', class_='card-details-value')
+                    duration_num = dura.convert_num(duration.get_text().strip().split()[0].replace('1.5-2', '1.5').
+                                                    replace('2.5-3', '2.5').replace('1-2', '2').replace('2-3', '3')
+                                                    .replace('0.5-1', '1').replace('4-8', '8').replace('Up', '2').replace('12-18', '18'))
+                    duration_time = None
+                    if len(duration.get_text().strip().split()) == 2:
+                        if str(duration_num) == '0.5':
+                            duration_num = '6'
+                        if 'Not' not in duration_num:
+                            if str(duration_num) == '1' and 'Semester' not in duration.get_text().strip().split()[1]:
+                                duration_time = 'year'
+                            elif str(duration.get_text().strip().split()[1]) == 'Semester':
+                                duration_num = '6'
+                                duration_time = 'months'
+                            elif float(duration_num) > 5:
+                                duration_time = 'months'
+                            else:
+                                duration_time = 'years'
+                        else:
+                            duration_num = 'N/A'
+                            duration_time = 'N/A'
+                    else:
+                        if 'Not' not in duration_num:
+                            if str(duration_num) == '1':
+                                duration_time = 'year'
+                            elif float(duration_num) > 5:
+                                duration_time = 'months'
+                            else:
+                                duration_time = 'years'
+                        else:
+                            duration_num = 'N/A'
+                            duration_time = 'N/A'
+                    course_data['Duration'] = duration_num
+                    course_data['Duration_Time'] = duration_time
+                    print('DURATION / DURATION TIME: ', str(duration_num) + ' / ' + str(duration_time))
 
 
 

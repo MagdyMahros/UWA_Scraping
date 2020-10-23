@@ -1,10 +1,13 @@
 import re
 
 
-def convert_num(text):  # okay... but why tho? what about zero?
+def convert_num(text):  # okay... but why tho? what about zero? << (and y u didnt put the capital letters) haha I put them alrdy
     return text.replace('one', '1').replace('two', '2').replace('three', '3').replace('four', '4').replace('five',
                                                                                                            '5').replace(
-        'six', '6').replace('seven', '7').replace('eight', '8').replace('nine', '9')
+        'six', '6').replace('seven', '7').replace('eight', '8').replace('nine', '9').replace('One', '1').replace('Two',
+                                                                                                                 '2').\
+        replace('Three', '3').replace('Four', '4').replace('Five', '5').replace('Six', '6').replace('Seven', '7').\
+        replace('Eight', '8').replace('Nine', '9')
 
 
 def convert_duration(duration):
