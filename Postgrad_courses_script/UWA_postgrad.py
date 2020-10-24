@@ -174,9 +174,10 @@ for each_url in course_links_file:
                 delivery_tag = dynamic_info_card.find_next('div', class_='card-details-label',
                                                            text= re.compile('Delivery', re.IGNORECASE))
                 if delivery_tag:
-                    delivery_list = delivery_tag.find_next('div', class_='card-details-value').\
+                    delivery_list = delivery_tag.find_next('div', class_ = 'card-details-value').\
                         find('ul', class_='chevron-before-list').get_text().strip().replace('\n', ' / ')
                     if 'On-campus' in delivery_list:
+
                         course_data['Offline'] = 'yes'
                         course_data['Face_to_Face'] = 'yes'
                     else:
@@ -199,6 +200,19 @@ for each_url in course_links_file:
                     print('FACE_TO_FACE: ', course_data['Face_to_Face'])
                     print('DISTANCE: ', course_data['Distance'])
                     print('BLENDED: ', course_data['Blended'])
+
+                # CITY
+                location_tag = dynamic_info_card.find_next('div', class_='card-details-label',
+                                                           text=re.compile('Locations', re.IGNORECASE))
+                if location_tag:
+                    locations = location_tag.find_next('div', class_='card-details-value').\
+                        find('ul', class_='chevron-before-list').find_all('li')
+                    if locations:
+                        for city in locations:
+                            city = city.get_text().__str__().strip().split()[0].lower()
+                            actual_cities.append(city)
+                    print('CITY: ', actual_cities)
+
 
 
 
