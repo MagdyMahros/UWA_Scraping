@@ -40,8 +40,8 @@ course_data = {'Level_Code': '', 'University': 'Australian Catholic University',
                'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '',
                'Prerequisite_2': '', 'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prerequisite_2_grade': '',
                'Prerequisite_3_grade': '', 'Website': '', 'Course_Lang': '', 'Availability': '', 'Description': '',
-               'Career_Outcomes': '', 'Online': '', 'Offline': 'yes', 'Distance': '', 'Face_to_Face': 'yes',
-               'Blended': '', 'Remarks': ''}
+               'Career_Outcomes': '', 'Online': 'no', 'Offline': 'yes', 'Distance': 'no', 'Face_to_Face': 'yes',
+               'Blended': 'no', 'Remarks': ''}
 
 possible_cities = {'albany': 'Albany', 'perth': 'Perth'}
 possible_languages = {'Japanese': 'Japanese', 'French': 'French', 'Italian': 'Italian', 'Korean': 'Korean',
@@ -209,6 +209,41 @@ for each_url in course_links_file:
                 course_data['Full_Time'] = 'yes'
             if 'part-time' in element.lower():
                 course_data['Part_Time'] = 'yes'
+
+    # DELIVERY
+    delivery_tag = soup.find('div', class_='card-details-label', text=re.compile('Delivery', re.IGNORECASE))
+    if delivery_tag:
+        delivery_list = delivery_tag.find_next('div', class_='card-details-value'). \
+            find('ul', class_='chevron-before-list').get_text().strip().replace('\n', ' / ')
+        if 'On-campus' in delivery_list:
+            course_data['Offline'] = 'yes'
+            course_data['Face_to_Face'] = 'yes'
+        else:
+            course_data['Offline'] = 'no'
+            course_data['Face_to_Face'] = 'no'
+        if 'Off-campus' in delivery_list:
+            course_data['Distance'] = 'yes'
+        else:
+            course_data['Distance'] = 'no'
+        if 'Online' in delivery_list:
+            course_data['Online'] = 'yes'
+        else:
+            course_data['Online'] = 'no'
+        if 'On-campus' in delivery_list and 'Off-campus' in delivery_list and 'Online' in delivery_list:
+            course_data['Blended'] = 'yes'
+        else:
+            course_data['Blended'] = 'no'
+        print('ONLINE: ', course_data['Online'])
+        print('OFFLINE: ', course_data['Offline'])
+        print('FACE_TO_FACE: ', course_data['Face_to_Face'])
+        print('DISTANCE: ', course_data['Distance'])
+        print('BLENDED: ', course_data['Blended'])
+    else:
+        print('ONLINE: ', course_data['Online'])
+        print('OFFLINE: ', course_data['Offline'])
+        print('FACE_TO_FACE: ', course_data['Face_to_Face'])
+        print('DISTANCE: ', course_data['Distance'])
+        print('BLENDED: ', course_data['Blended'])
 
     # CITY
     locations_card = soup.find('div', class_='card-details-label', text=re.compile('Locations', re.IGNORECASE))
