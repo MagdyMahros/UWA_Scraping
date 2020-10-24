@@ -38,8 +38,8 @@ csv_file = csv_file_path.__str__() + '/UWA_bachelors.csv'
 course_data = {'Level_Code': '', 'University': 'Australian Catholic University', 'City': '', 'Country': 'Australia',
                'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': 'year',
                'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '',
-               'Prerequisite_2': '', 'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prerequisite_2_grade': '',
-               'Prerequisite_3_grade': '', 'Website': '', 'Course_Lang': '', 'Availability': '', 'Description': '',
+               'Prerequisite_2': 'IELTS', 'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prerequisite_2_grade': '6.5',
+               'Prerequisite_3_grade': '', 'Website': '', 'Course_Lang': '', 'Availability': 'A', 'Description': '',
                'Career_Outcomes': '', 'Online': 'no', 'Offline': 'yes', 'Distance': 'no', 'Face_to_Face': 'yes',
                'Blended': 'no', 'Remarks': ''}
 
@@ -305,12 +305,12 @@ for each_url in course_links_file:
     del actual_cities
 
 # TABULATE THE DATA
-desired_order_list = ['Level_Code', 'University', 'City', 'Country', 'Course', 'Faculty', 'Int_Fees', 'Local_Fees',
+desired_order_list = ['Level_Code', 'University', 'City', 'Course', 'Faculty', 'Int_Fees', 'Local_Fees',
                       'Currency', 'Currency_Time', 'Duration', 'Duration_Time', 'Full_Time', 'Part_Time',
                       'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',
-                      'Prequisite_2_grade',
-                      'Prequisite_3_grade', 'Website', 'Course_Lang', 'Availability', 'Description', 'Int_Description',
-                      'Career_Outcomes', 'Online', 'Offline', 'Distance', 'Face_to_Face', 'Blended', 'Remarks']
+                      'Prerequisite_2_grade', 'Prerequisite_3_grade', 'Website', 'Course_Lang', 'Availability',
+                      'Description','Career_Outcomes', 'Country', 'Online', 'Offline', 'Distance', 'Face_to_Face',
+                      'Blended', 'Remarks']
 
 course_dict_keys = set().union(*(d.keys() for d in course_data_all))
 

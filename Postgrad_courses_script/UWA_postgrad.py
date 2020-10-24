@@ -39,8 +39,8 @@ csv_file = csv_file_path.__str__() + '/UWA_postgradute.csv'
 
 course_data = {'Level_Code': '', 'University': 'Australian Catholic University', 'City': '', 'Country': 'Australia',
                'Course': '', 'Int_Fees': '', 'Local_Fees': '', 'Currency': 'AUD', 'Currency_Time': 'year',
-               'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': '',
-               'Prerequisite_2': '', 'Prerequisite_3': '', 'Prerequisite_1_grade': '', 'Prerequisite_2_grade': '',
+               'Duration': '', 'Duration_Time': '', 'Full_Time': '', 'Part_Time': '', 'Prerequisite_1': 'IELTS',
+               'Prerequisite_2': '', 'Prerequisite_3': '', 'Prerequisite_1_grade': '6.5', 'Prerequisite_2_grade': '',
                'Prerequisite_3_grade': '', 'Website': '', 'Course_Lang': '', 'Availability': '', 'Description': '',
                'Career_Outcomes': '', 'Online': '', 'Offline': '', 'Distance': '', 'Face_to_Face': '',
                'Blended': '', 'Remarks': ''}
@@ -93,10 +93,14 @@ for each_url in course_links_file:
         print('COURSE DESCRIPTION: ', description.get_text())
         course_data['Description'] = description.get_text()
 
-    # TODO: FIND PREREQUISITES
+    # COURSE LANGUAGE
+    for language in possible_languages:
+        if language in course_data['Course']:
+            course_data['Course_Lang'] = language
+        else:
+            course_data['Course_Lang'] = 'English'
+    print('COURSE LANGUAGE: ', course_data['Course_Lang'])
 
-
-    #TODO: FIND A BETTER WAY TO GET THE DURATION & DURATION TIME
     # DURATION & DURATION_TIME
     details_card_title = soup.find('h3', class_='card-title', text=re.compile('Quick details', re.IGNORECASE))
     if details_card_title:
@@ -136,6 +140,8 @@ for each_url in course_links_file:
                         else:
                             duration_num = 'N/A'
                             duration_time = 'N/A'
+                            course_data[
+                                'Remarks'] = 'The duration for this course stated in the website as "Not Applicable"'
                     else:
                         if 'Not' not in duration_num:
                             if str(duration_num) == '1':
@@ -147,7 +153,7 @@ for each_url in course_links_file:
                         else:
                             duration_num = 'N/A'
                             duration_time = 'N/A'
-                            course_data['Remarks'] = 'The duration Stated as "Not Applicable" in the course page'
+                            course_data['Remarks'] = 'The duration for this course stated in the website as "Not Applicable"'
                     course_data['Duration'] = duration_num
                     course_data['Duration_Time'] = duration_time
                     print('DURATION / DURATION TIME: ', str(duration_num) + ' / ' + str(duration_time))
@@ -211,19 +217,95 @@ for each_url in course_links_file:
                         for city in locations:
                             city = city.get_text().__str__().strip().split()[0].lower()
                             actual_cities.append(city)
+                    else:
+                        actual_cities.append('perth')
                     print('CITY: ', actual_cities)
 
 
+            # AVAILABILITY
+            course_code_Tag = dynamic_info_card.find_next('div', class_='card-details-label',
+                                                          text=re.compile('Course Code', re.IGNORECASE))
+            if course_code_Tag:
+                course_code_list = course_code_Tag.find_next('div', class_='card-details-value').find('ul',
+                                                                                                      class_='chevron-before-list').get_text().strip()
+                if 'not available to international' in course_code_list:
+                    course_data['Availability'] = 'D'
+                else:
+                    course_data['Availability'] = 'A'
+            print('AVAILABILITY: ', course_data['Availability'])
 
+            #CLOCK THE X BUTTON TO EXIT THE DYNAMIC DETAILS CARD
+            try:
+                browser.execute_script("arguments[0].click();", WebDriverWait(browser, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, '//*[@id="modaal-close"]'))))
+            except TimeoutException:
+                print('Timeout Exception')
+                pass
+    # CAREER OUTCOME
+    # navigate to careers & further study tab
+    try:
+        browser.execute_script("arguments[0].click();", WebDriverWait(browser, 5).until(
+            EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, 'CAREERS & FURTHER STUDY'))))
+    except TimeoutException:
+        print('Timeout Exception')
+        pass
+    # get the data
+    out_come_card = soup.find('h3', class_='card-title', text=re.compile('Related careers', re.IGNORECASE))
+    out_come_card2 = soup.find('h3', class_='card-title', text=re.compile('Career opportunities', re.IGNORECASE))
+    outcome_list = []
+    if out_come_card:
+        data_container = out_come_card.find_next('div', class_='card-container'). \
+            find('div', class_='card-content rich-text-content').find('ul')
+        if data_container:
+            print(data_container.get_text().__str__().strip().replace('\n', ' / '))
+            course_data['Career_Outcomes'] = data_container.get_text().__str__().strip().replace('\n', ' / ')
+    elif out_come_card2:
+        data_container = out_come_card2.find_next('div', class_='card-container')
+        if data_container:
+            career_tag = data_container.find('div', class_='card-content rich-text-content')
+            if career_tag:
+                career_tag.find('ul', class_='chevron-before-list')
+                print(career_tag.get_text().__str__().strip().replace('\n', ' / '))
+                course_data['Career_Outcomes'] = career_tag.get_text().__str__().strip().replace('\n', ' / ')
+            elif data_container.find('div').find_all('a', class_='card-rich-link'):
+                career_list = data_container.find('div').find_all('a', class_='card-rich-link')
+                if career_list:
+                    for career in career_list:
+                        # print(career.get_text().__str__().strip().replace('\n', ' / '))
+                        outcome_list.append(career.get_text().__str__().strip().replace('\n', ' / '))
+                outcome_list = ' / '.join(outcome_list)
+                print(outcome_list.__str__().strip())
+                course_data['Career_Outcomes'] = outcome_list.__str__().strip()
 
+    # duplicating entries with multiple cities for each city
+    for i in actual_cities:
+        course_data['City'] = possible_cities[i]
+        course_data_all.append(copy.deepcopy(course_data))
+    del actual_cities
 
+    # TABULATE THE DATA
+    desired_order_list = ['Level_Code', 'University', 'City', 'Course', 'Faculty', 'Int_Fees', 'Local_Fees',
+                          'Currency', 'Currency_Time', 'Duration', 'Duration_Time', 'Full_Time', 'Part_Time',
+                          'Prerequisite_1', 'Prerequisite_2', 'Prerequisite_3', 'Prerequisite_1_grade',
+                          'Prerequisite_2_grade', 'Prerequisite_3_grade', 'Website', 'Course_Lang', 'Availability',
+                          'Description', 'Career_Outcomes', 'Country', 'Online', 'Offline', 'Distance', 'Face_to_Face',
+                          'Blended', 'Remarks']
 
+    course_dict_keys = set().union(*(d.keys() for d in course_data_all))
 
+    with open(csv_file, 'w', encoding='utf-8', newline='') as output_file:
+        dict_writer = csv.DictWriter(output_file, course_dict_keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(course_data_all)
 
-
-
-
-
+    with open(csv_file, 'r', encoding='utf-8') as infile, open('UWA_postgradute_ordered.csv', 'w', encoding='utf-8',
+                                                               newline='') as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=desired_order_list)
+        # reorder the header first
+        writer.writeheader()
+        for row in csv.DictReader(infile):
+            # writes the reordered rows to the new file
+            writer.writerow(row)
 
 
 
