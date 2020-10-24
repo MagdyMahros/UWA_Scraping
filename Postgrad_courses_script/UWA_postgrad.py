@@ -3,7 +3,7 @@
     * company: Fresh Futures/Seeka Technology
     * position: IT Intern
     * date: 20-10-20
-    * description:This script extracts the corresponding Post graduate courses details and tabulate it.
+    * description:This script extracts the corresponding Postgraduate courses details and tabulate it.
 """
 import csv
 import re
@@ -95,6 +95,8 @@ for each_url in course_links_file:
 
     # TODO: FIND PREREQUISITES
 
+
+    #TODO: FIND A BETTER WAY TO GET THE DURATION & DURATION TIME
     # DURATION & DURATION_TIME
     details_card_title = soup.find('h3', class_='card-title', text=re.compile('Quick details', re.IGNORECASE))
     if details_card_title:
@@ -115,7 +117,8 @@ for each_url in course_links_file:
                     duration = duration_tag.find_next('div', class_='card-details-value')
                     duration_num = dura.convert_num(duration.get_text().strip().split()[0].replace('1.5-2', '1.5').
                                                     replace('2.5-3', '2.5').replace('1-2', '2').replace('2-3', '3')
-                                                    .replace('0.5-1', '1').replace('4-8', '8').replace('Up', '2').replace('12-18', '18'))
+                                                    .replace('0.5-1', '1').replace('4-8', '8').replace('Up', '2').
+                                                    replace('12-18', '18'))
                     duration_time = None
                     if len(duration.get_text().strip().split()) == 2:
                         if str(duration_num) == '0.5':
@@ -144,9 +147,61 @@ for each_url in course_links_file:
                         else:
                             duration_num = 'N/A'
                             duration_time = 'N/A'
+                            course_data['Remarks'] = 'The duration Stated as "Not Applicable" in the course page'
                     course_data['Duration'] = duration_num
                     course_data['Duration_Time'] = duration_time
                     print('DURATION / DURATION TIME: ', str(duration_num) + ' / ' + str(duration_time))
+
+                # FULL_TIME / PART_TIME
+                full_part_time_tag = dynamic_info_card.find_next('div', class_='card-details-label',
+                                                                 text=re.compile('Attendance', re.IGNORECASE))
+                if full_part_time_tag:
+                    full_part_time_list = full_part_time_tag.find_next('div', class_='card-details-value').\
+                        find('ul', class_='chevron-before-list').get_text().strip().replace('\n', ' / ')
+                    # print('FULL-TIME / PART-TIME: ', full_part_time_list)
+                    if 'Part-time' in full_part_time_list:
+                        course_data['Part_Time'] = 'yes'
+                    else:
+                        course_data['Part_Time'] = 'no'
+                    if 'Full-time' in full_part_time_list:
+                        course_data['Full_Time'] = 'yes'
+                    else:
+                        course_data['Full_Time'] = 'no'
+                    print('FULL-TIME: ', course_data['Full_Time'])
+                    print('PART-TIME: ', course_data['Part_Time'])
+
+                # DELIVERY (online, offline, face-to-face, blended, distance)
+                delivery_tag = dynamic_info_card.find_next('div', class_='card-details-label',
+                                                           text= re.compile('Delivery', re.IGNORECASE))
+                if delivery_tag:
+                    delivery_list = delivery_tag.find_next('div', class_='card-details-value').\
+                        find('ul', class_='chevron-before-list').get_text().strip().replace('\n', ' / ')
+                    if 'On-campus' in delivery_list:
+                        course_data['Offline'] = 'yes'
+                        course_data['Face_to_Face'] = 'yes'
+                    else:
+                        course_data['Offline'] = 'no'
+                        course_data['Face_to_Face'] = 'no'
+                    if 'Off-campus' in delivery_list:
+                        course_data['Distance'] = 'yes'
+                    else:
+                        course_data['Distance'] = 'no'
+                    if 'Online' in delivery_list:
+                        course_data['Online'] = 'yes'
+                    else:
+                        course_data['Online'] = 'no'
+                    if 'On-campus' in delivery_list and 'Off-campus' in delivery_list and 'Online' in delivery_list:
+                        course_data['Blended'] = 'yes'
+                    else:
+                        course_data['Blended'] = 'no'
+                    print('ONLINE: ', course_data['Online'])
+                    print('OFFLINE: ', course_data['Offline'])
+                    print('FACE_TO_FACE: ', course_data['Face_to_Face'])
+                    print('DISTANCE: ', course_data['Distance'])
+                    print('BLENDED: ', course_data['Blended'])
+
+
+
 
 
 
